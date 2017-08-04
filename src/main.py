@@ -3,5 +3,5 @@
 import editorUI
 from uuid import uuid4
 
-ui=editorUI.EditorUI(str(uuid4()) + ".txt")
+ui=editorUI.EditorUI("quicknotes/" + str(uuid4()) + ".txt")
 ui.main()
