@@ -52,8 +52,9 @@ class MainUI(object):
             file_path_lookup[filename] = fullpath
             with open(fullpath, "r") as fhandle:
 
-                # Get creation time
-                appendstring = str(datetime.datetime.strptime(time.ctime(os.path.getctime(fullpath)), "%a %b %d %H:%M:%S %Y")) + "\n"
+                # Get creation timei
+                timestamp = time.localtime(os.path.getctime(fullpath))
+                appendstring = time.strftime("%a %b %d %H:%M:%S %Y", timestamp) + "\n"
                 if preview:
                     line = fhandle.readline()
                     line = line.rstrip()
