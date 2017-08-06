@@ -2,8 +2,8 @@ import urwid
 from lineWalker import LineWalker
 import uuid
 from time import sleep
-
-
+import mainUI
+import pdb
 
 class EditorUI(object):
 
@@ -13,7 +13,7 @@ class EditorUI(object):
 
         self.filename = filename
 
-        self.default_footer = urwid.AttrWrap(urwid.Text("<Alt + s> Save as |  <Alt + q> Close"), "standard")
+        self.default_footer = urwid.AttrWrap(urwid.Text("<Alt + y> Save as |  <Alt + q> Close"), "standard")
 
         self.walker = LineWalker(filename)
         self.content = urwid.ListBox(self.walker)
@@ -24,19 +24,41 @@ class EditorUI(object):
         
 
 
-    def main(self): 
+    def open(self, loop = None, callback = None, quicknote = False):
+        
+        if quicknote:
+            self.central_frame.set_header(urwid.AttrWrap(urwid.Text("Notology Quicknote\n" + self.filename, align = "center"), "header"))
+
+        self.callback = callback
         self.palette = [("standard", "light blue", "black"),
-                        ("warning", "yellow", "black")]
-        self.loop = urwid.MainLoop(self.central_frame, self.palette, unhandled_input = self.keypress_handler)
-        self.loop.run()
+                        ("warning", "yellow", "black"),
+                        ("header", "black", "dark blue")]
+        fresh = False
+        if loop == None:
+            self.loop = urwid.MainLoop(self.central_frame, self.palette, unhandled_input = self.keypress_handler)
+            fresh = True
+        else:
+            loop.widget = self.central_frame
+            loop.unhandled_input = self.keypress_handler
+            loop.screen.register_palette(self.palette)
+            loop.draw_screen()
+            self.loop = loop
+
+        if fresh:
+            self.loop.run()
+        return 0
 
     def keypress_handler(self, key):
         
         if key == "meta q":
-            raise urwid.ExitMainLoop()
-
-        elif key == "meta s":
-            self.save(self.filename)
+            if not self.callback:
+                raise urwid.ExitMainLoop()
+            else:
+                #mainUI.MainUI().open(self.loop)
+                self.callback(self.loop)
+                
+        elif key == "meta y":
+            self.save(self.filename, verbose = True)
     
         elif key == "delete":
             # delete at end of line
@@ -66,7 +88,7 @@ class EditorUI(object):
 
         return True
     
-    def save(self, save_filename):
+    def save(self, save_filename, verbose = False):
         walker = self.walker
         lines = []
 
@@ -78,19 +100,20 @@ class EditorUI(object):
 
         while walker.file is not None:
             lines.append(walker.read_next_line())
-
+        #pdb.set_trace()
         file_handle = open(save_filename, "w")
 
 
         prefix = ""
         for line in lines:
-            file_handle.write(line)
+            file_handle.write(prefix + line)
             prefix = "\n"
 
-        self.central_frame.footer = urwid.AttrWrap(urwid.Text(save_filename + " saved."), "warning")
-        self.loop.draw_screen()
-        sleep(2)
-        self.central_frame.footer = self.default_footer
+        if verbose:
+            self.central_frame.footer = urwid.AttrWrap(urwid.Text(save_filename + " saved."), "warning")
+            self.loop.draw_screen()
+            sleep(2)
+            self.central_frame.footer = self.default_footer
 
 def re_tab(s):
     """Return a tabbed string from an expanded one."""
